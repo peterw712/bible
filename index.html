@@ -1,0 +1,59 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Bible Verse Randomizer</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <main class="container">
+      <header class="header">
+        <h1>Bible Verse Randomizer</h1>
+        <p>Choose a length and get a random passage.</p>
+      </header>
+
+      <section class="controls">
+        <label class="field">
+          Length
+          <select id="lengthMode">
+            <option value="single">Single verse</option>
+            <option value="range">Verse range</option>
+            <option value="chapter">Full chapter</option>
+          </select>
+        </label>
+
+        <div id="rangeOptions" class="field-group" aria-hidden="true">
+          <label class="field">
+            Min verses
+            <input id="minRange" type="number" min="2" max="50" value="2" />
+          </label>
+          <label class="field">
+            Max verses
+            <input id="maxRange" type="number" min="2" max="50" value="6" />
+          </label>
+        </div>
+
+        <label class="field">
+          Translation
+          <select id="translation">
+            <option value="default">Default</option>
+            <option value="kjv">KJV</option>
+            <option value="web">WEB</option>
+            <option value="asv">ASV</option>
+          </select>
+        </label>
+
+        <button id="randomizeBtn" class="primary">Randomize</button>
+      </section>
+
+      <section class="result">
+        <div id="status" class="status" role="status"></div>
+        <h2 id="reference" class="reference"></h2>
+        <pre id="verseText" class="verse-text"></pre>
+      </section>
+    </main>
+
+    <script src="app.js"></script>
+  </body>
+</html>
