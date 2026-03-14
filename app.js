@@ -74,6 +74,7 @@ const elements = {
   maxRange: document.getElementById("maxRange"),
   translation: document.getElementById("translation"),
   randomizeBtn: document.getElementById("randomizeBtn"),
+  copyBtn: document.getElementById("copyBtn"),
   status: document.getElementById("status"),
   reference: document.getElementById("reference"),
   verseText: document.getElementById("verseText"),
@@ -148,11 +149,65 @@ function setStatus(message, type = "") {
 function renderResult(data) {
   elements.reference.textContent = data.reference || "";
   elements.verseText.textContent = data.text?.trim() || "";
+  elements.copyBtn.disabled = !elements.reference.textContent || !elements.verseText.textContent;
 }
 
 function clearResult() {
   elements.reference.textContent = "";
   elements.verseText.textContent = "";
+  elements.copyBtn.disabled = true;
+}
+
+function getPassageText() {
+  const reference = elements.reference.textContent.trim();
+  const verseText = elements.verseText.textContent.trim();
+  if (!reference || !verseText) {
+    return "";
+  }
+  return `${reference}\n\n${verseText}`;
+}
+
+async function writeTextToClipboard(text) {
+  if (navigator.clipboard && window.isSecureContext) {
+    await navigator.clipboard.writeText(text);
+    return;
+  }
+
+  const helper = document.createElement("textarea");
+  helper.value = text;
+  helper.setAttribute("readonly", "");
+  helper.style.position = "absolute";
+  helper.style.left = "-9999px";
+  document.body.appendChild(helper);
+  helper.select();
+
+  const successful = document.execCommand("copy");
+  document.body.removeChild(helper);
+
+  if (!successful) {
+    throw new Error("Copy failed.");
+  }
+}
+
+async function handleCopy() {
+  const text = getPassageText();
+  if (!text) {
+    setStatus("Nothing to copy yet.", "error");
+    return;
+  }
+
+  const originalLabel = elements.copyBtn.textContent;
+  try {
+    await writeTextToClipboard(text);
+    elements.copyBtn.textContent = "Copied";
+  } catch (error) {
+    setStatus(error.message || "Unable to copy passage.", "error");
+    return;
+  }
+
+  window.setTimeout(() => {
+    elements.copyBtn.textContent = originalLabel;
+  }, 1500);
 }
 
 async function getRandomPassage() {
@@ -161,8 +216,7 @@ async function getRandomPassage() {
   const mode = elements.lengthMode.value;
 
   if (mode === "chapter") {
-    const chapterData = await fetchChapter(book.name, chapter);
-    return chapterData;
+    return fetchChapter(book.name, chapter);
   }
 
   const chapterData = await fetchChapter(book.name, chapter);
@@ -173,8 +227,7 @@ async function getRandomPassage() {
 
   if (mode === "single") {
     const verse = getRandomInt(1, verseCount);
-    const reference = buildReference(book.name, chapter, verse);
-    return fetchPassage(reference);
+    return fetchPassage(buildReference(book.name, chapter, verse));
   }
 
   const { min, max } = clampRangeValues(
@@ -186,8 +239,7 @@ async function getRandomPassage() {
   const length = getRandomInt(minAllowed, maxAllowed);
   const start = getRandomInt(1, verseCount - length + 1);
   const end = start + length - 1;
-  const reference = buildReference(book.name, chapter, start, end);
-  return fetchPassage(reference);
+  return fetchPassage(buildReference(book.name, chapter, start, end));
 }
 
 async function handleRandomize() {
@@ -214,4 +266,5 @@ function updateRangeVisibility() {
 
 elements.lengthMode.addEventListener("change", updateRangeVisibility);
 elements.randomizeBtn.addEventListener("click", handleRandomize);
+elements.copyBtn.addEventListener("click", handleCopy);
 updateRangeVisibility();
